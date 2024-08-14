@@ -1,0 +1,734 @@
+---
+title: "Capstone"
+output:
+  pdf_document: 
+    keep_tex: True
+  html_document: default
+date: "2022-11-06"
+editor_options:
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#RStudio.Version() #Spotted Wakerobin: 2022.07.2+576
+#tinytex::install_tinytex()
+```
+
+Title: Predicting Heart Failure: A Machine Learning Comparative Investigation.
+
+Abstract
+   Heart Failure (HF) has been a prevalent global pandemic for years, in 2014 “approximately 26 million people worldwide were living with heart failure”1 (Ponikowski et al., 2014) with this number only increasing in our present day. To help improve these statistics, predictive models for this disease can provide a key approach to decreasing its impact. The purpose of this report aims to analyse the “DataClean-fullage"2 (Coronary Artery Disease - Analysis, n.d.) dataset and i) use supervised machine learning algorithms to create predictive models for heart failure, ii) create unsupervised machine learning algorithms to analyse and discover interesting natural cluster patterns in the response variable; heart failure and iii) use association rule mining to find a list of established association rules for heart failure and its possible association with other medical conditions within the dataset. The methodological approaches use the program RStudio to conduct data cleaning, manipulation, supervised (Naïve Bayes and Logistic Regression), unsupervised (Agglomerative Hierarchical Clustering (AHC) and DBSCAN), and descriptive (Association Rule Mining) algorithms, summarizations, and visualisations; using various packages such as \texttt{cluster}, ‘naivebayes’, ‘MASS’, ‘ROCR’ and ‘arules’ to conduct on the data set ‘DataClean-fullage’ to investigate the topic of heart failure. 
+   The study's findings demonstrate the superiority of logistic regression combined with stepwise regression; used to create a subset of independent variables (from the main dataset) significantly influencing the dependent variable: heart failure, to predict the classification of future observations (patients). AHC’s Ward’s method provided insights into the natural clusters pertaining to heart failure, concluding that a distinct cluster of two groups produced the best results, supporting the outcomes of the response variable (heart failure and no heart failure). Using association rule mining unfortunately established no association rules for heart failure and other medical conditions. Having performed the analysis, we can conclude that with the subset of variables from the ‘DataClean-fullage’ dataset, through unsupervised machine learning clustering algorithm analysis that the most distinct natural clustering size is 2 using AHC Ward method, which had the best performance, and aligns what we already know about the Heart Failure response variable from the original dataset. In our supervised machine learning algorithms, we found that training and testing a logistic regression model resulted in the best performance with the highest accuracy when predicting observation with the test data and is recommended to use to predict future outcomes of heart failure. Finally using the association rule mining, we were not able to find any rules, but with that said, as more data is collected and possible variables added, it may be possible in the future.
+
+-----------------
+Introduction
+	Heart failure is a long-term “condition where your heart muscle doesn't pump blood as well as it should”3 (Healthdirect Australia, 2020) possibly stemming from “several health conditions, your lifestyle, and your age and family history”4 (CDC, 2019) that may contribute to increasing your risk. Regardless of the underlying causes, heart failure provides a global burden as it affects “at least 26 million people worldwide and is increasing in prevalence”5 (Savarese & Lund, 2017) placing great stress on not only the patients but caregivers and the healthcare system. In the past, it has been estimated that heart failure has resulted in a “health expenditure of around $31 billion”6 (Mozaffarian et al., 2016) with the estimated cost expected to “increase by 127 % between 2012 and 2030.” 6 (Mozaffarian et al., 2016).  The projected increase by such an alarming rate can be contributed to the possible lack of awareness of the disease or not taking the issue seriously which has and will continue to result in premature deaths globally.
+	Society needs to improve in providing better awareness, incentivising the promotion of self-care through a healthy lifestyle, and continuing to conduct research to combat this global issue that claims so many lives. In the past, researchers have embarked on studies to collect and analyse data with the objective of predicting and treating heart failure. These datasets can be found through a vast number of resources online; from UCI Machine Learning Repository, Kaggle, to global electronic health records of patients who have had heart failure. From these records and datasets is possible to conduct research into exploratory character analysis of the disease, and the global citizens it affects, as well as using supervised machine learning classification algorithms to predict future outcomes. This report aims to do just that, conduct exploratory data analysis, supervised, unsupervised and descriptive machine learning algorithms to gain insight into characteristics, natural clustering of the response variable: heart failure, prediction of heart failure and its associative rules with other variables corresponding to other medical conditions.
+
+III. Data
+   As previously mentioned in the abstract above, to conduct the analysis we will be using the ‘DataClean-fullage.csv’ dataset retrieved from Kaggle; “a subsidiary of Google LLC, is an online community of data scientists and machine learning practitioners”7 (Wikipedia Contributors, 2019) which is a subset of the original dataset ‘HDHI Admissions Data.csv’ which is an observational study where the “data was collected from patients admitted over a period of two years (1 April 2017 to 31 March 2019) at Hero DMC Heart Institute, Unit of Dayanand Medical College and Hospital, Ludhiana, Punjab, India. This is a tertiary care medical college and hospital. During the study period, the cardiology unit had 14,845 admissions corresponding to 12,238 patients. 1921 patients who had multiple admissions.”8 (“Hospital Admissions Data,” n.d.).  The ‘DataClean-fullage.csv’ dataset has 53 variables; 7 character variable, 11 numerical (continuous) variable, 35 numeric binary categorical variables, and 6611 observations. Missing values and duplicates were checked for with 0 found. With that said the ‘DataClean-fullage.csv’ data set has had pre-processing done where the original dataset; ‘HDHI Admissions Data.csv’, contained the variables i) Cardiogenic Shock: Patients in shock due to cardiac reasons, ii) Shock: Systolic blood pressure < 90 mmHg, and when the cause for shock was any reason other than cardiac, iii) Month of the year, iv) Duration of stay, v) Admission number, vi) Date of admission, vii) Date of Discharge and viii) Housing location. There is no reason provided as to why they were removed, it can be assumed that they were deemed not relevant in the researchers’ research study as this holds true for this study.
+   The ‘HDHI Admissions Data.csv’ dataset had 15757 observations with the ‘DataClean-fullage.csv’ having 6611 observations, as mentioned before. Again, there was no reasoning provided as to why so many observations had been removed. Upon investigation, there were no duplicates (specifically checking the serial number and Admission number identification variables), therefore the assumption for removing duplicates as a reason for removing observation said observations does not seem like a feasible explanation (some assumptions for supervised machine learning algorithms require observation to be independent of one another, therefore removing duplicates could resolve this assumption violation, but is not a recommended form of practice). An alternative reasoning would be to have a balanced response variable outcome. In the ‘HDHI Admissions Data.csv’ dataset, the outcome for having and not having heart failure is 28.94% vs 71.05%. Therefore, it is possible to assume observations were removed to make the data more balance since the outcome for having and not having heart failure is 47.78%% vs 52.22% in the ‘DataClean-fullage.csv’ dataset. (See RMarkdown Part 2 for raw code.)
+
+----------------
+Methods
+   The following analysis was conducted in RStudio: Spotted Wakerobin, version 2022.07.2+576. Within the dataset, several variables can be used as a response variable for supervised machine learning algorithms, which one can argue makes this a multipurpose dataset. In this study, we will focus on heart failure as the response variable. This investigative report requires the implementation of at least three of the five listed machine-learning algorithm categories. Before further discussing the methods used, it is important to note that stepwise regression (which will be discussed later) was conducted to reduce the size of the dataset and find a set of independent variables that significantly influence the dependent variable. Therefore, when referring to ‘the data subset’ it is referring to this process that occurred. The first category involves Linear Discriminant Analysis (LDA), Quadradic Discriminant Analysis (QDA), or Naive Bayes. Both LDA and QDA require the predictor variables to be numerical. Although two of the variables in the subset are numerical, the remaining are binary categorical variables. Therefore, the assumption is not met for QDA and LDA and cannot be used. Naïve Bayes was chosen because the subset is more suited for this algorithm, which will be discussed in detail further in this investigation.
+ 	In the second category, we have the option for Logistic Regression classifiers and/or K-Nearest Neighbour (KNN) for classification/regression. In the data set the dependent (response) variable 'HeartFail' is binary. Due to the nature of the dependent variable, our first choice for a supervised machine learning algorithm would be Binary Logistic Regression because it is a direct way of estimating the probability of a binary response variable; we assume an appropriate probability distribution for the binary class labels Yi = {0,1}.  Therefore, based on the characteristics of the response variable, we are more inclined to use logistic regression which was chosen over KNN method. In addition, using logistic regression will allow the use of the stepwise method to reduce the large dataset where through a series of tests (e.g. F-tests, t-tests) it can find a set of independent variables that significantly influence the dependent variable. An alternative to stepwise regression would have been Principal Component Analysis (PCA; the third category option) which is most notably used in data mining for dimensionality reduction and data visualisation. Unfortunately, due to the requirements of PCA; using numerical predictor variables, and the characteristics of the original dataset; having mixed variables (numerical and categorical variables), PCA was not used. 
+	Regarding unsupervised machine learning algorithms; Cluster Analysis (the fourth category), there are three popular cluster analysis techniques: K-means, Density-Based Spatial Clustering of Applications with Noise (DBSCAN) and its sister algorithm HDBSCAN; which doesn’t need an epsilon (eps) value specification as opposed to DBSCAN, and Hierarchical clustering; more specifically Algometric Hierarchical Clustering (AHC). When using the k-means algorithm, it assumes that all ‘n’ variables that describe the data are real-valued; a numeric vector that can be seen as a point in an n-dimensional coordinates space. It is not applicable to categorical data because categorical variables are discrete and do not have any natural origin, so computing Euclidean distance (distance from a centroid as a definition for a cluster) for such space is not meaningful when using categorical variables. Since K-means can only be used in data sets where you can compute the arithmetic mean (mean is a least-squares estimator) which minimizes the squared Euclidean, this puts severe limits on what distances can be used with k-means. Since there are mixed variables in the dataset, the distance that would be used is Gowers distance, which, if you were to supply K-means with a distance object, it would treat it as a data frame, and the outcomes would be incorrect unlike the \texttt{hclust}() function in AHC and the dbscan() function in DBSCAN/HDBSCAN. Therefore k-means cannot be used as a clustering algorithm.
+   As mentioned, in the case of distance calculation, we would use Gowers to calculate the distance/dissimilarity between rows when the variables are not the same class, for which (as briefly discussed above) can be used in a hclust()  in AHC and the dbscan() function in DBSCAN/ HDBSCAN. DBSCAN/ HDBSCAN does its cluster analysis based on the density of the regions where it uses epsilon ($\epsilon$; the radius of the circle) and minimum points (minPts; minimum number of points inside the circle). For DBSCAN to work it needs numerical variables which, as we’ve seen, the subset has mixed variables and the fix is to use a Gower distance object instead of the data subset. With that said DBSCAN is a good algorithm for finding outliers in a data set and finding arbitrarily shaped clusters based on the density of data points in different regions but requires there to be a drop in the density of data points to detect boundaries between clusters. This can be a foreseen issue due to the possibility of the dataset not having many drops in density between clusters (i.e. where there is a possibility of clusters overlapping, multiple clusters might get grouped together into one large cluster). These are things to consider when running the DBSCAN and interpreting its results.
+   In AHC every observation is a cluster on its own and observations are merged with the pair of clusters that are the most similar (least dissimilar) according to a given dissimilarity measure between clusters. When computing the distance/dissimilarity, we use the dist() function within the hclust() function, which will automatically provide the Gowers distance as the method since it recognizes mixed variables within the data subset. AHC is a clustering method that is widely used in many fields such as biology; the essential component of biological data, where the idea that similarity exists on multiple levels, as the similarity is a naturally ordered characteristic and this methodology is not concentrated on when conducting the other clustering analysis that has been mentioned above. Therefore, AHC is the most widely used algorithm for expression data as it specifically addresses similarity on multiple levels, in a very simple manner. The simplicity comes in the form of a visual result when the algorithm completes; a dendrogram. The dendrogram allows us to easily interpret and find clusters and gives us a clear visual indication of its model performance. We can further explore the dendrogram at varying cluster sizes by cutting the dendrogram at specific heights (similarity level) to gain a detailed understanding of the model performance at that cut level and view it on a two-dimensional plot. Overall, the cluster analysis methods we will use are AHC (the preferred method of cluster analysis for the reasons mentioned above) and a brief look at DBSCAN/ HDBSCAN to compare their performances.
+	Finally, we will use Association Rule Mining (ARM) (category five). The premise of ARM is to analyze data for patterns, or co-occurrences, in a database where it identifies frequent ‘if-then’ associations, which themselves are the association rules. An association rule has two parts: an ‘(A)ntecedent’ (if/left-hand side; lhs) and a ‘(C)onsequent’ (then/right-hand side; rhs). An antecedent is an item found within the data. A consequent is an item found in combination with the antecedent. Therefore, pertaining to this dataset, the intended outcome of using the association rule mining is to find a list of established rules where the consequent is having heart failure and the antecedents are other possible variables within the dataset that are other diseases. The outcome of this would be to help patients and doctors become aware of other possible medical conditions a patient could or may have that can be tested for and/ or be made aware of if they had heart failure.
+
+
+Part 1. Load Libraries
+```{r, echo=FALSE}
+#tinytex::install_tinytex()
+library(MASS)
+library(naivebayes)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(caret)
+library(gmodels)
+library(caTools)
+library(car)
+library(psych)
+library(cluster)
+library(class)
+library(factoextra)
+library(dbscan)
+library(corrplot)
+library(ROCR)
+library(arules)
+```
+
+Part 2. Load file and explore
+```{r load}
+HeartFailure = read.csv('DataClean-fullage.csv') #Load file ‘Coronary_Artery_Disease’.
+str(HeartFailure) #View structure; 7 character types, 11 numerical/ integer types, 35 numeric binary categorical variables. 53 total variables.
+summary(HeartFailure)
+#iew(HeartFailure)
+#ength(HeartFailure) #53 variables
+no_obs = dim(HeartFailure)[1]
+no_obs #6611 observations.
+
+#Missing values
+count_miss_values = function(x) sum(is.na(x))
+apply(HeartFailure, MARGIN = 2, FUN = count_miss_values) #0 missing values
+sum(is.na(HeartFailure)) #Double check, 0 missing values.
+
+#Duplicate values
+count_duplicates = function(x) sum(duplicated(x))
+apply(HeartFailure, MARGIN = c(1,2), FUN = count_duplicates) #0 duplicates.
+sum(duplicated(HeartFailure)) #Double check, 0 duplicates. Metadata states that 1921 patients had multiple admissions. From this, we could assume duplicate serial numbers if the same patient was recorded twice, but there were none.
+
+#Rename variables for better clarification.
+HeartFailure = setNames(HeartFailure, c("SerialNo", "Age", "Gender", "AdmissType", "ICUDur", "Outcome", "Smoking", "Alcohol", "Diabetes", "Hypertension", "CorArtDis", "Cardmyop", "ChronKidDis", "LeukCount", "Platelets", "Urea", "Creatinine", "BTypeNatriPep", "RaisCardEnzy", "EjecFrac", "StabAngia", "AcuteCorSyn", "StElevMyoInfa", "ATypChestPain", "HeartFail", "HFRedEjeFrac", "HFNormEjeFrac", "ValvHeaDis", "CompHeaBlk", "SikSinSynd", "AcuKidInj", "CVSInf", "CVABle", "AtriFib", "VenTach", "PSVT", "ContHeaDis", "UTI", "NeurCardSyn", "Orthostatic", "InfEndo", "DeepVenThrom", "PulmEmbo", "ChestInfec", "Count", "Haemoglobin", "Anaemia", "SevereAnaem", "Glucose", "GroupAge", "GroupPlate", "GroupLeuk", "GroupEjectFrac"))
+
+#Check the response variables' outcome to determine the balance of the dataset; determine the balance of the outcomes for the response variables. A perfectly balanced dataset would be a 50:50 split for 'No'(0) and 'Yes'(1) regarding heart failure. The threshold for what is considered an imbalanced dataset is a discussion with no precise drawn conclusion. For this study, a 30(Yes):60(No) split is the threshold for what is considered balanced. This is because there needs to be a good representation of both classes for when a model is trained using the training data; a balanced data set would generate higher accuracy models, higher balanced accuracy, and a balanced detection rate. Hence, it's important to have a balanced data set for a classification model.
+
+#Check response variables 'Heart Failure = Yes (1)' outcomes percentage.
+Heart_Fail_Yes = HeartFailure[HeartFailure$HeartFail == "1",]
+Heart_Fail_Yes_obs = dim(Heart_Fail_Yes)[1]
+Heart_Fail_Yes_obs #3159
+YesPercent = (Heart_Fail_Yes_obs/no_obs)*100
+YesPercent # 47.78%
+
+#Check response variables 'Heart Failure = No (0)' outcomes percentage.
+Heart_Fail_No = HeartFailure[HeartFailure$HeartFail == '0',]
+Heart_Fail_No_obs = dim(Heart_Fail_No)[1]
+Heart_Fail_No_obs #3452
+NoPercent = (Heart_Fail_No_obs/no_obs)*100
+NoPercent # 52.22 % 
+
+#As we can see the dataset is fairly balanced; 47.78% of the outcomes are 'Yes' and 52.22% are 'No' for the response variable 'HeartFail' (Heart Failure).
+
+#Original dataset investigation into response variables outcome
+data = read.csv('HDHI Admission data.csv')
+no_obs1 = dim(data)[1]
+no_obs1 #15757 observations.
+#Check response variables 'Heart Failure = Yes (1)' outcomes percentage.
+Heart_Fail_Yes1 = data[data$HEART.FAILURE == "1",]
+Heart_Fail_Yes_obs1 = dim(Heart_Fail_Yes1)[1]
+Heart_Fail_Yes_obs1 #4561
+YesPercent1 = (Heart_Fail_Yes_obs1/no_obs1)*100
+YesPercent1 # 28.95%
+
+#Check response variables 'Heart Failure = No (0)' outcomes percentage.
+Heart_Fail_No1 = data[data$HEART.FAILURE == '0',]
+Heart_Fail_No_obs1 = dim(Heart_Fail_No1)[1]
+Heart_Fail_No_obs1 #11196
+NoPercent1 = (Heart_Fail_No_obs1/no_obs1)*100
+NoPercent1 # 71.05% 
+#Reasoning for reducing number of observations could be to create more balanced outcomes with reponse variable.
+
+#We are looking for variables that are directly related to/ may contribute to heart failure. Variables that are deemed not related are removed. Count, which has a constant value of '1' does not contribute to the dataset because its values are consistent. The Serial number does not hold significance; therefore, both can be removed.
+HeartFailure = HeartFailure[,-c(1,45)]
+#View(HeartFailure)
+
+#In the supervised machine learning algorithms character variables and the response variable will need to be character types to factors, specifically character classes with more than two levels, those that have two levels (binary) do not need to be converted.
+HeartFailure$Outcome = as.factor(HeartFailure$Outcome)
+HeartFailure$GroupAge = as.factor(HeartFailure$GroupAge)
+HeartFailure$GroupPlate = as.factor(HeartFailure$GroupPlate)
+HeartFailure$GroupLeuk = as.factor(HeartFailure$GroupLeuk)
+HeartFailure$GroupEjectFrac = as.factor(HeartFailure$GroupEjectFrac)
+HeartFailure$HeartFail = as.factor(HeartFailure$HeartFail)
+str(HeartFailure) 
+#'Gender' and 'Admission' type remain character types because they are binary categorical variables. 'GroupAge', GroupPlate', 'GroupPlate', 'GroupLeuk', and 'GroupEjectFrac' are converted to factors (from character type) because they are multi-level categorical variables. 'HeartFail' is also converted to a factor (from a numerical categorical variable) because it is the response variable. 1 character class variable, 6-factor variables (including the predictor variable; Heart Fail), 9 numerical variables and 33 numeric binary categorical variables.
+```
+  Within the dataset, several variables can be used as a response variable for supervised machine learning algorithms, which one can argue makes this a multipurpose dataset. In this study, we will focus on heart failure as the response variable in which we will use supervised machine learning algorithm classifiers to indirectly estimate the probability of heart failure; Naive Bayes; based on Bayes theorem, and logistic regression which directly estimates the probability. From this, we can remove the response variable to conduct an unsupervised clustering method to check for any natural clusters that may become apparent through the process that was not accounted for in the original study. We will begin with supervised learning, specifically logistic regression.
+
+----------------------------------------------------------
+SUPERVISED LEARNING: Logistic regression and Naive Bayes
+----------------------------------------------------------
+  In the data set the dependant (repsone) variable 'HeartFail' is binary. Due to the nature of the dependant variable our first choice for a supervised machine learning algorithm would be Binary Logistic Regression because it is a direct way for estimating the probability of a binary response variable; we assume an appropriate probability distribution for the binary class labels Yi = {0,1}. 
+
+Part 3. Binary Logistic regression model with whole dataset.
+```{r}
+#Logistic model with full dataset
+m1 = glm(HeartFail ~., data = HeartFailure, family = 'binomial')
+summary(m1) #In the summary of the logistic regression on the whole dataset we can see that there are a lot of predictor variables (as seen in the EDA; 53 variables) where their p-values > 0.05 which indicates no statistical significance of these predictor variables to the model (the estimate in the summary could be 0). There are a few ways to deal with enough insignificant variables in the model/ fit a better model with fewer parameters. Two main methods are the Principal Component analysis (PCA) and the stepwise selection (regression) method. Regarding PCA, the requirement to use this method is that the predictor variables are numerical; simply put, if the variables don't belong on a coordinate plane, then do not apply PCA to them. As we have seen in the dataset, there is the presence of a few numerical variables (9 out of 53; ~17%,), but most of the variables are categorical; nominal and ordinal, therefore there is not a significant amount in the dataset to use PCA. The alternative then is to use the stepwise selection (regression) method which consists of iteratively adding and removing predictors, in the predictive model, to find the subset of variables in the data set resulting in the best performing model, which is a model that lowers prediction error and finds significant variables.
+
+#Stepwise method using 'backward' direction.
+#m2=step(m1,dir="backward")
+#summary(m2) 
+
+#Relevent variables found; 'Age + Alcohol + Urea + HFRedEjeFrac + HFNormEjeFrac + ValvHeaDis + ContHeaDis'. #The null deviance (a goodness-of-fit metric) in the output is from fitting a model with no predictors; this is the worst possible model, that says the response does not depend on any of the predictors (9151.802). The residual deviance is significantly different to the null deviance (84.153). This reduced model had an AIC=100.15 compared to the full model's AIC=182.84. Residual deviance: reduced model D=84.153, full model D=64.839. This shows that there wasn’t much cost to reducing the number of predictors since the Residual Deviance was higher in the full model, but the AIC was significantly reduced in the stepwise selection (regression); backward direction. Since the AIC score for a model is equal to the residual deviance plus two times the number of parameters (K) when comparing models, the one with the smaller AIC score is better supported by the data. Therefore the model using the stepwise selection, where the outcome involves the variables mentioned before, is the better choice. From the model's summary, we can look at the statistical significance of the predictor variables to the response variables. We see that 'Alcohol', 'HFRedEjeFrac', 'HFNormEjeFrac', 'ValvHeaDis', and 'ContHeaDis' have a p-value < 0.05 which correlates to statistical significance. Both 'Urea' (0.07106) and Age (0.13502) have values where p-value > 0.05 which means they are not statistically significant but were still found to be important contributions to the model. To validate the selection of the two variables, we can investigate their correlation to heart failure. Research has shown that as your age increases there is a high chance of heart failure because the is a deterioration in cardiac structure and function which leads to increased susceptibility to heart failure. Urea is also found to be significant because urea nitrogen is a waste product that your kidneys remove from your blood. If there is a persistently high blood urea nitrogen level, this is associated with an increased risk of cardiovascular events in patients with acute heart failure (the heart is still beating, but it cannot deliver enough oxygen to meet the body's needs). Therefore, the justification for using these two variables is sound and overall, the results from the stepwise selection (regression) method provide concrete results to consider using these variables as a subject to the main dataset to use for the remainder of this study into predicting heart failure using supervised and unsupervised machine learning algorithms.  
+
+#Stepwise method using 'backward' direction to support variable selection using 'backward' direction.
+#m3 = step(m1,dir = 'both')
+#summary(m3) 
+
+#Same outcome as m2, as we would hope to expect: Function supports 'backward' stepwise method by finding Age + Alcohol + Urea + HFRedEjeFrac + HFNormEjeFrac + ValvHeaDis + ContHeaDis to be relevent variables. AIC=100.15
+
+#Created subset with chosen variables from stepwise function.
+Hf_subset = HeartFailure[,c(1,7,15,24,25,26,27,36)]
+#View(Hf_subset)
+#str(Hf_subset)
+#pairs.panels(Hf_subset) #low correlation between variables. HFRedEjeFrac and HFNormEjeFrac has a low-medium correlatiion value of |31| but high enough to be considered as correlated.
+```
+  Overall, by using statistical analysis to interpret the logistic regression models and coefficients we were able to determine that most of the variables in the dataset were not statistically significant based on their p-values $>$ 0.05 and therefore we could reduce the dataset to a reasonable size to where a subset of variables in the data set to result in the best performing model. This was done using the stepwise selection (regression), where through a series of tests (e.g. F-tests, t-tests) it found a set of independent variables that significantly influence the dependent variable. An alternative would have been PCA but due to the characteristics of the variables (mixed variables, numerical and categorical) and the requirements for PCA (numerical variables). As a result, the stepwise regression found 7 variables that can be used as a subset (of the original dataset) to use in the machine learning algorithms.  The following are the variables; 1) Age (class: numeric) = ages of the patients, 2) Alcohol (class: binary categorical) = Whether the patient drinks alcohol, 3) Urea (class: numerical) = a substance formed in the liver via the urea cycle from ammonia and is the final end product of protein metabolism. Healthy kidneys filter urea and remove other waste products from your blood (A high urea count means poor kidney function). 4) Heart Failure with Reduced Ejection Fraction (HFRedEjeFrac, class: binary categorical) = Occurs when the muscle of the left ventricle is not pumping as well as normal, 5) Heart Failure with Normal Ejection Fraction (HFRedEjeFrac, class: binary categorical) = Heart failure where the left ventricle is pumping normally. 6) Valvular Heart Disease (ValvHeaDis, class: binary categorical) = when any valve in the heart has damage or is diseased, and 7) ContHeaDis (ContHeaDis, class: binary categorical) = An abnormality in the heart that develops before birth. 
+
+Part 4. Binary Logistical regression with subset dataset
+```{r}
+#Create copy fof subset data
+HF_subset1 = Hf_subset
+#Split data
+set.seed(123)
+HF_LR_sample = sample.split(HF_subset1$HeartFail, SplitRatio = 0.80) #sample split.
+HF_LR_train = subset(HF_subset1, HF_LR_sample == T) #Training dataset.
+HF_LR_test = subset(HF_subset1, HF_LR_sample == F) #Test dataset.
+dim(HF_LR_train)[1] #5289 Observations.
+dim(HF_LR_test)[1] #1322 Observations.
+
+#Logistic regression
+(HF_LR = glm(HeartFail ~ ., data = HF_LR_train, family = 'binomial'))
+summary(HF_LR)#We can see residual deviance = 67.508 and an AIC score of 83.508. In figure 4, we can see that the 'Age', 'Alcohol' and 'Urea' variables p-values > 0.05 which would mean no statistically significant which correlates to the ‘Estimate’ (beta 0) in the summary essentially being 0 for these variables. For the remaining variables; ‘HFRedEjeFrac’, ‘HFRedNormFrac’, ‘ValvHeaDis’ and ‘ContHeaDAis’ we can see the p-value < 0.05 which correlates to these predictor variables being statistically significant. Overall, compared to figure 1 a&b, the logistic regression with the subset variables had a better performance (AIC = 83.508) vs using the whole dataset (AIC = 182.84) which reconfirms the validation of using the stepwise regression. 
+
+(HF_LG_VIF = vif(HF_LR)) #The VIF of a predictor is a measure for how easily it is predicted from a linear regression using the other predictors. A general guideline is that a VIF larger than 5 or 10 is large, indicating that the model has problems estimating the coefficient. The VIF values are between 1.014 and 2.637 which is a low value that correlates to no multcollinearity, which satisfied one of the assumptions of logistic regression.
+
+#Predict probability
+(HF_LR_probs = predict(HF_LR, newdata = HF_LR_test, type = 'response'))
+
+# Classification accuracy - test data
+HF_LG_pred = ifelse(HF_LR_probs > 0.5, 1,0)
+(HF_LG_CM = table(HF_LG_pred, HF_LR_test$HeartFail))
+(HF_LG_acc = sum(diag(HF_LG_CM))/ sum(HF_LG_CM)) #99.8% Accuracy
+
+#More Info
+confusionMatrix(HF_LG_CM)
+#From the confusion table we can see the accuracy of the model is 99.85%, where the sensitivity value (proportion of positive classifications out of the number of samples that were actually positive) is 99.86%; 689 true negatives (didn’t have heart failure) and 1 false positive (predicted as having heart failure, but actually didn't), and the specificity (proportion of negative classifications out of the number of samples which were actually negative) of 98.84%; 631 true positives (had heart failure) and 1 false negative (predicted to not have heart failure, but actually did).
+
+# AUC — the area under the ROC curve accuracy; measure of accuracy where it graphs the true positive rate and the false positive rate.
+HF_LG_pred_probs = predict(HF_LR, newdata = HF_LR_test[,-4], type = 'response')
+HF_LG_pr = prediction(HF_LG_pred_probs, HF_LR_test$HeartFail)
+HF_LG_pfr = performance(HF_LG_pr, "tpr", "fpr")
+par(mfrow=c(1,1), mar=c(4,4,2,1))
+plot(HF_LG_pfr, main="ROC Curve: 99.99% Accuracy")
+abline(a=0, b=1, col='red')
+(HF_auc_lgr = performance(HF_LG_pr, "auc")@y.values) #99.99% ROCR accuracy
+#A high-accuracy model indicates very few incorrect predictions. However, this doesn’t consider the overall cost of those incorrect predictions. The use of simple accuracy metrics problems can give an inflated sense of confidence in model predictions that is detrimental to some objectives. AUC is the go-to metric in such scenarios as it calibrates the trade-off between sensitivity and specificity at the best-chosen threshold. Further, 'accuracy' measures how well a single model is doing, whereas AUC compares two models as well as evaluates the same model’s performance across different thresholds. We can see between the two accuracies that the 'accuracy' model provides a 99.8% and AUC provides a 99.99% accuracy. With such a minuscule percent difference, we can confidently conclude that the logistic classification model has a very high predictive accuracy.
+
+#Check assumptions for logistical regression
+#A: Dependant variable is Binary
+str(HF_subset1$HeartFail) #Two levels "B", "M". Assumption is satisfied.
+
+#B: Check multicollinearity
+(HF_multcoll = as.data.frame(as.matrix(vif(HF_LR))))
+#View(HF_multcoll)
+min(HF_multcoll) #Min value: 1.013905
+max(HF_multcoll) #Max values: 2.366195
+#As previously shown, this assumption is satisfied.
+
+#C: Observations are independent of one another
+#In the original dataset they mention 1921 patients who had multiple admissions, but these observations were removed from the original dataset by the source from which this dataset was retrieved from. This was double-checked by identifying duplicates; specifically, the serial numbers recorded in the original dataset, where no duplicates/ matched data was found. There is also no indication of any time series variables that would suggest multiple observations from the same patients occurred.
+
+#Additional notes of Logistic regression
+#When using logistic regression there is no assumption of normal distribution needed, polynomial functions and interactions of predictor variables can be accommodated, and typically logistic regression requires a large sample size (10 times the number of predictors), which is satisfied; 53 variables in the original dataset and 6611 observations.
+```
+  Another supervised machine learning algorithm that can be used is the Naïve Bayes classifier to estimate the probabilities from the data, then apply Bayes’ theorem. Naïve Bays assumes that the dependent variable, Y, and the predictor(s), X, are categorical. With that said we can use numerical predictor variables, but the model no longer estimates the probabilities P(Xi|Y) in a frequentist way, because such predictor(s) can take an infinite number of values. The workaround used by the naive Bayes classifier is to model these probabilities using some form of the probability density function. The most common approach uses the Normal (Gaussian) distribution, the default setting in the Naive Bayes function. The main assumption for Naive Bayes is that the attributes are conditionally independent given the class. This assumption is called class conditional independence. It is made to simplify the computation involved and, in this sense, is considered ”naive” because practical applications' databases usually contain correlated predictors. Even when the conditional independence assumption is not entirely met, the class probability estimations usually differ enough that the independence assumption error does not change their order. Therefore, the naive Bayesian classifier performs well even in problems where the conditional independence assumption is not entirely true and will be used next.
+
+Part 5. Niaves Bayes assumption check
+```{r}
+#Make a copy of the subset.
+HF_subset2 = Hf_subset
+#Naives Bayes assumption for no correlation between numerical variables. That is Naive Bayes assumes the conditional probabilities are independent. 
+(HF_NB_numcorr = cor(HF_subset2$Age, HF_subset2$Urea)) #Correlation between both numerical variables is 0.1617642 which suggest a low correlation, which, in this context meets the Naive Bayes assumption. We can also use Kernel Density approximation usekernal=T. If you use this, then Naive Bayes does not depend on the normality assumption, but this could alter the performance/accuracy of the test. Therefore, Naive Bayes with and without Kernel will be used to compare.
+
+#Investigating the correlation between categorical variables we can conduct a significant association Chi-Square test. This test is best suited because it test requires the variable to be nominal or ordinal, which they are.
+#ALCOHOL vs ____
+#Chi-Square test of independence between categorical variables.
+(HF_chisq_testV2V5 = chisq.test(HF_subset2$Alcohol, HF_subset2$HFRedEjeFrac)) # p-value = 0.01159. Independent
+(HF_chisq_testV2V6 = chisq.test(HF_subset2$Alcohol, HF_subset2$HFNormEjeFrac)) # p-value = 0.1167. Not independent
+(HF_chisq_testV2V7 = chisq.test(HF_subset2$Alcohol, HF_subset2$ValvHeaDis)) # p-value = 0.631. Not independent
+(HF_chisq_testV2V8 = chisq.test(HF_subset2$Alcohol, HF_subset2$ContHeaDis)) # p-value = 0.6486. Not independent
+
+#HFRedEjeFrac vs ____
+(HF_chisq_testV5V6 = chisq.test(HF_subset2$HFRedEjeFrac, HF_subset2$HFNormEjeFrac)) # p-value < 2.2e-16. Independent
+(HF_chisq_testV5V7 = chisq.test(HF_subset2$HFRedEjeFrac, HF_subset2$ValvHeaDis)) #p-value = 0.06047 Not independent.
+(HF_chisq_testV5V8 = chisq.test(HF_subset2$HFRedEjeFrac, HF_subset2$ContHeaDis)) #p-value = 0.5995 Not independent.
+
+#HFNormEjeFrac vs ______
+(HF_chisq_testV6V7 = chisq.test(HF_subset2$HFNormEjeFrac, HF_subset2$ValvHeaDis)) #p-value = 0.9346 Not idependant.
+(HF_chisq_testV6V8 = chisq.test(HF_subset2$HFNormEjeFrac, HF_subset2$ContHeaDis)) #p-value = 0.05588 Not idependant.
+
+#ValvHeaDis vs _____
+(HF_chisq_testV7V8 = chisq.test(HF_subset2$ValvHeaDis, HF_subset2$ContHeaDis)) #p-value = 0.01145 Independant.
+
+#Create Corr matrix
+HF_Cat_corr = as.data.frame(HF_NB_numcorr)
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV2V6$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV2V6$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV2V7$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV2V8$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV5V6$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV5V7$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV5V8$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV6V7$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV6V8$p.value))
+HF_Cat_corr = rbind(HF_Cat_corr,c( HF_chisq_testV7V8$p.value))
+#Column name
+HF_Cat_corr=setNames(HF_Cat_corr, 'p-value')
+#rownames
+rownames(HF_Cat_corr) = c('V1V3','V2V5','V2V6','V2V7','V2V8','V5V6','V5V7', 'V5V8','V6V7','V6V8','V7V8')
+#Create Outcome variable
+Outcome = c('Independant','Independent','Not independent','Not independent','Not independent','Independent','Not independent','Not independent','Not independent','Not independent','Independent')
+#Add column to HF_Cat_corr
+(HF_Cat_corr = cbind(HF_Cat_corr, Outcome))
+```
+  Based on the tests conducted we can conclude that the variable independence assumption is not entirely met. With that said, the hypothesis test (in the Chi-Square test) is suggesting dependence because the null hypothesis is rejected at the 0.05 level. But there is still a possibility that the variables are independent, and the test could be significant if more data was collected. Regarding independence tests, there is also the fact that there is no obvious hypothesis testing for the independence of the categorical variables with the numerical variables. The purpose of the correlation check between the numerical variables and the Chi-Square hypothesis test between categorical variables is to support the statement that the " independence assumption is often violated" but the fact remains that "naïve Bayes nonetheless often delivers competitive classification accuracy. Coupled with its computational efficiency and many other desirable features, this leads to naïve Bayes being widely applied in practice." As we will now see, although the independence assumption is not entirely met, the model still performs well.
+
+Part 6. Niaves Bayes without kernel
+```{r}
+#Split data
+set.seed(123)
+HF_NB_sample = sample.split(HF_subset2$HeartFail, SplitRatio = 0.80)
+HF_NB_train = subset(HF_subset2, HF_NB_sample == T) #Training data
+HF_NB_test = subset(HF_subset2, HF_NB_sample == F) #Test data
+dim(HF_NB_train)[1] #5289
+dim(HF_NB_test)[1] #1322
+
+#Model
+(HF_NB = naive_bayes( HeartFail ~ ., data = HF_NB_train, type = 'class'))
+#52% of patients are found to have had heart failure and 48% have not. Observing the tables from the model we can see that 'Age', 'Urea', 'HFRedEjeFrac', and 'HFNormEjeFrac' group means are greater for those patients who have had heart failure and 'Alcohol', 'ValvHeaDis' and 'ContHeaDis' means is greater for those who have no had heart failure. We can also see that for each variable is labeled as 'Gaussian'.
+
+
+#Visualisation
+par(mfrow=c(2,2), mar=c(4,4,1,1))
+plot(HF_NB)
+par(mfrow=c(1,1))
+
+# Prediction
+PredClassNB = predict(HF_NB, newdata = HF_NB_test[,-4])
+
+# Confusion Matrix
+(ContabNB =table(PredClassNB, HF_NB_test$HeartFail)) #689 true negative, 1 false negative
+
+#Accuracy
+(AccuracyNB = sum(diag(ContabNB))/sum(ContabNB)) #0.9931921
+
+#More detail
+confusionMatrix(ContabNB) 
+#From the confusion table we can see the accuracy of the model is 99.32%, where the sensitivity value (proportion of positive classifications out of the number of samples that were actually positive) is 99.86%; 698 true negatives (didn't have heart failure) and 1 false positive (predicted as having heart failure, but actually didn't), and the specificity (proportion of negative classifications out of the number of samples which were actually negative) of 98.73%; 624 true positives (had heart failure) and 8 false negatives (predicted to not have heart failure, but actually did).
+
+#ROCR
+HF_NB_pred_prob = predict(HF_NB, newdata=HF_NB_test[,-c(4)], type="prob")[,2]
+HF_NB_pr = prediction(HF_NB_pred_prob, HF_NB_test$HeartFail)
+HF_NB_prf = performance(HF_NB_pr,"tpr", "fpr")
+plot(HF_NB_prf, main="ROC Curve: 99.59% Accuracy")
+abline(a=0,b=1, col='red')
+(HF_NB_auc = as.numeric(performance(HF_NB_pr, "auc")@y.values))
+#AUC acuracy measures at 99.59%.
+```
+
+Part 7. Niaves Bayes with kernel: We can also use Kernel Density approximation usekernal=T which correlates to the model not being dependent on the normality assumption.
+
+```{r}
+#Model
+(HF_NBK = naive_bayes( HeartFail ~ ., data = HF_NB_train, type = 'class', usekernel = T))
+
+#Visualisation
+par(mfrow=c(2,2), mar=c(4,4,1,1))
+plot(HF_NBK)
+par(mfrow=c(1,1))
+
+# Prediction
+PredClassNBK = predict(HF_NBK, newdata = HF_NB_test[,-4])
+
+# Confusion Matrix
+(ContabNBK =table(PredClassNBK, HF_NB_test$HeartFail))
+
+#Accuracy
+(AccuracyNBK = sum(diag(ContabNBK))/sum(ContabNBK)) #0.9432678
+
+#More information
+confusionMatrix(ContabNBK)
+
+#More detail
+confusionMatrix(ContabNBK) 
+#From the confusion matrix we can see that the accuracy of the model is 94.33%. There is a sensitivity of 99.86%: 689 true negatives and one false positive, and a specificity of 88.29%: 558 true positives and 74 false negatives.
+
+#ROCR
+HF_NBK_pred_prob = predict(HF_NBK, newdata=HF_NB_test[,-c(4)], type="prob")[,2]
+HF_NBK_pr = prediction(HF_NBK_pred_prob, HF_NB_test$HeartFail)
+HF_NBK_prf = performance(HF_NBK_pr,"tpr", "fpr")
+plot(HF_NBK_prf, main="ROC Curve: 99.73% Accuracy")
+abline(a=0,b=1, col='red')
+(HF_NBK_auc = as.numeric(performance(HF_NBK_pr, "auc")@y.values))
+#AUC acuracy measures at 99.73%.
+```
+
+Part 8. Assemble all results into a dataframe
+```{r}
+overall_accuracy = c(HF_LG_acc, HF_auc_lgr[[1]], AccuracyNB, 
+                   HF_NB_auc[[1]], AccuracyNBK, HF_NBK_auc)
+results = as.data.frame(rbind(overall_accuracy))
+names(results)=c("LG Accuracy", "LG AUC Accuracy", "NB Accuracy", "NB AUC Accuracy", "NB (Kernel) Accuracy", "NB (Kernel) AUC Accuracy")
+print(results)
+```
+
+Part 9. Forloops for Naive Bayes and Logistic regression
+```{r}
+#Logistic regression
+for (i in 1:10) {
+  #Split data
+  HF_LR_sample = sample.split(HF_subset1$HeartFail, SplitRatio = 0.80)
+  HF_LR_train = subset(HF_subset1, HF_LR_sample == T)
+  HF_LR_test = subset(HF_subset1, HF_LR_sample == F)
+  #Model
+  HF_LR = glm(HeartFail ~ ., data = HF_LR_train, family = 'binomial')
+  #Predict
+  HF_probs = predict.glm(HF_LR, newdata = HF_LR_test, type = 'response')
+  #Classification accuracy - test data
+  HF_LG_pred = ifelse(HF_probs > 0.5, 1,0)
+  HF_LG_CM = table(HF_LG_pred, HF_LR_test$HeartFail)
+  #Accuracy
+  (HF_LG_acc[i] = sum(diag(HF_LG_CM))/ sum(HF_LG_CM))
+}
+(HF_LG_acc)
+(HF_lgr_forloop_mean = mean(HF_LG_acc)) #0.9984115 
+(HF_lgr_forloop_variance = var(HF_LG_acc)) #8.20133e-07 
+#Due to very low variance in the forloop accuracy results, we can be confident in the prediction accruacy of the model.
+
+#Niave Bayes without Kernel
+for (i in 1:10) {
+  #Sample split
+  HF_NB_sample = sample.split(HF_subset2$HeartFail, SplitRatio = 0.80)
+  HF_NB_train = subset(HF_subset2, HF_NB_sample == T)
+  HF_NB_test = subset(HF_subset2, HF_NB_sample == F)
+  #Model
+  HF_NB = naive_bayes( HeartFail ~ ., data = HF_NB_train, type = 'class')
+  # Prediction
+  PredClassNB = predict(HF_NB, newdata = HF_NB_test[,-4])
+  # Confusion Matrix
+  ContabNB =table(PredClassNB, HF_NB_test$HeartFail)
+  #Accuracy
+  AccuracyNB[i] = sum(diag(ContabNB))/sum(ContabNB)
+}
+(AccuracyNB)
+(HF_NB_forloop_mean = mean(AccuracyNB)) #0.9857035
+(HF_NB_forloop_variance = var(AccuracyNB)) #2.879366e-05
+#Due to 0 variance in the forloop accuracy results, we can be confident in the prediction accruacy of the model.
+
+#Niave Bayes with Kernel
+for (i in 1:10) {
+  #Sample split
+  HF_NBK_sample = sample.split(HF_subset2$HeartFail, SplitRatio = 0.80)
+  HF_NBK_train = subset(HF_subset2, HF_NBK_sample == T)
+  HF_NBK_test = subset(HF_subset2, HF_NBK_sample == F)
+  #Model
+  HF_NBK = naive_bayes( HeartFail ~ ., data = HF_NBK_train, type = 'class', usekernel = T)
+  # Prediction
+  PredClassNBK = predict(HF_NBK, newdata = HF_NBK_test[,-4])
+  # Confusion Matrix
+  ContabNBK =table(PredClassNBK, HF_NBK_test$HeartFail)
+  #Accuracy
+  AccuracyNBK[i] = sum(diag(ContabNBK))/sum(ContabNBK)
+}
+(AccuracyNBK)
+(HF_NBK_forloop_mean = mean(AccuracyNBK)) #0.9305598
+(HF_NBK_forloop_variance = var(AccuracyNBK)) #0.0002447429
+#Due to 0 variance in the forloop accuracy results, we can be confident in the prediction accruacy of the model.
+
+#Accuracies
+overall_accuracy = c(HF_lgr_forloop_mean, HF_lgr_forloop_variance, HF_NB_forloop_mean, HF_NB_forloop_variance, HF_NBK_forloop_mean, HF_NBK_forloop_variance)
+results = as.data.frame(rbind(overall_accuracy))
+names(results)=c("LG Forloop Mean Accuracy", "LG Forloop Variance", "NB Forloop Mean Accuracy", "NB Forloop Variance","NB Forloop with Kernel Mean Accuracy", "NB Forloop with Kernel Variance")
+print(results)
+```
+  From the accuracies we can make the following statements: Logistic regression has an accuracy of 99.84871% = 99.85% and an AUC accuracy of 99.99817% = 100%, Naive Bayes without using kernel has a 99.31921% = 99.32% and an AUC accuracy of 99.5854% = 99.59%. As expected, using Naive Bayes with kernel, we altered the performance/ accuracy of the test where the accuracy was 94.32678% = 94.33% and an AUC accruacy of 99.73652% = 99.74%.  
+  Accuracy and AUC are two types of evaluation metrics to measure the performance of the model. Both are helpful for comparing and assessing how well a model is doing. When determining which accuracy to use, 'accuracy' is a sufficient metric for balanced data but AUC is well-suited to measure the model’s performance on an imbalanced set. When conducting our EDA of the original data set, we found that the response variable outcomes were 52.22 % patients not having heart failure and 47.78% patients having heart failure. From this we can see that the values are balanced and therefore we will choose 'accruacy' as the measure of performance.
+  Therefore, looking at the overall supervised machine learning algorithm performances we have Logistic regression as with the best performance (99.85%), followed by Naive Bayes without kernel (99.32%) and Naive Bayes with kernel (94.33%) with the worst performance. From these results it is recommended to use the Logistic Regression supervised machine learning algorithm as a predictive model. For loops were conducted for each of the supervised machine learning algorithms above. The results concluded  mean accuracies of 99.84%: Logistic regression, 98.57%: Naive Bayes without kernel, and 93.05%: Naive Bayes with kernel. The overall varience for each forloop was < 0.0002447429, which solidifies our confidence in the models performances.
+  
+Part 10. k-NN: Run KNN for the purpose of curiosity of performance. Is not included in the report
+```{r}
+#Create copy
+HF_subset3 = Hf_subset
+# k-NN with standardized dataset
+#Check vairance of numerical variables "Age" and "Urea"
+(Age_var = var(HF_subset3$Age)) #165.5184
+(Urea_var = var(HF_subset3$Urea)) #2181.723
+#There is a large difference between the variance of both variables and therefore they need standardize the dataset
+
+#standardize without repsonse varaible.
+HF_subset_standardize = as.data.frame(scale(HF_subset3[,-4]))
+
+#Check vairance again of numerical variables "Age" and "Urea"
+(Age_var = var(HF_subset_standardize$Age)) #1
+(Urea_var = var(HF_subset_standardize$Urea)) #1
+HF_subset_standardize = cbind(HF_subset_standardize, HF_subset3$HeartFail)
+names(HF_subset_standardize)[names(HF_subset_standardize) == 'HF_subset3$HeartFail'] = 'HeartFail'
+#View(HF_subset_standardize)
+
+#Sample split
+set.seed(123)
+kNNSt_sample = sample.split(HF_subset_standardize$HeartFail, SplitRatio = 0.80)
+kNNSt_train = subset(HF_subset_standardize, kNNSt_sample == T)
+kNNSt_test = subset(HF_subset_standardize, kNNSt_sample == F)
+dim(kNNSt_train)[1] #5289
+dim(kNNSt_test)[1] #1322
+
+#MODEL: SCALING, k=2
+HF_predknn_sc = knn(kNNSt_train[,-8], kNNSt_test[,-8], kNNSt_train$HeartFail, k=2)
+
+#confusion tabke
+(HF_conf_tab_sc = table(HF_predknn_sc, kNNSt_test$HeartFail))
+#accuracy
+(HF_kNN_accuracy_sc = sum(diag(HF_conf_tab_sc))/sum(HF_conf_tab_sc)) #99.85%
+
+#for loop to check for best k value
+for (i in 1:30) {
+  HF_predknn_sc = knn(kNNSt_train[,-8], kNNSt_test[,-8], kNNSt_train$HeartFail, k=i)
+
+  HF_conf_tab_sc = table(HF_predknn_sc, kNNSt_test$HeartFail)
+  HF_kNN_accuracy_sc[i] = sum(diag(HF_conf_tab_sc))/sum(HF_conf_tab_sc)
+}
+print(HF_kNN_accuracy_sc)
+
+k.values_sc = 1:30
+accuracy_df_sc = data.frame(HF_kNN_accuracy_sc,k.values_sc)
+
+accuracy_df_sc
+
+ggplot(accuracy_df_sc,aes(x=k.values_sc,y=HF_kNN_accuracy_sc,)) + geom_point()+ geom_line(lty="dotted",color='red')
+#showing k = 1&2 as the  same highest accuracy of 99.77%
+
+#MODEL: NO STANDARDIZING, k=2
+HF_predknn_sc1 = knn(HF_LR_train[,-4], HF_LR_test[,-4], HF_LR_train$HeartFail, k=2)
+
+#confusion table
+(HF_conf_tab = table(HF_predknn_sc1, HF_LR_test$HeartFail))
+#accuracy
+(HF_kNN_accuracy = sum(diag(HF_conf_tab))/sum(HF_conf_tab)) #75.42%
+
+#for loop to check for best k value
+for (i in 1:30) {
+  HF_predknn = knn(HF_LR_train[,-4], HF_LR_test[,-4], HF_LR_train$HeartFail, k=i)
+
+  HF_conf_tab = table(HF_predknn, HF_LR_test$HeartFail)
+  HF_kNN_accuracy[i] = sum(diag(HF_conf_tab))/sum(HF_conf_tab)
+}
+print(HF_kNN_accuracy)
+
+k.values = 1:30
+accuricy.df = data.frame(HF_kNN_accuracy,k.values)
+
+accuricy.df
+
+ggplot(accuricy.df,aes(x=k.values,y=HF_kNN_accuracy,)) + geom_point()+ geom_line(lty="dotted",color='red') #showing k = 1 as the highest accuracy
+
+#Model no scaled, k=2
+HF_predknn = knn(HF_LR_train[,-4], HF_LR_test[,-4], HF_LR_train$HeartFail, k=1)
+
+#confusion tabke
+(HF_conf_tab = table(HF_predknn, HF_LR_test$HeartFail))
+#accuracy
+(HF_kNN_accuracy = sum(diag(HF_conf_tab))/sum(HF_conf_tab)) #82.45%
+```
+Other considerations: In this report, the purpose is to demonstrate a data mining-related investigation on data that we have collected; in this case, the dataset was used for doing an investigative analysis on coronary artery disease, but with the nature of the dataset it can be used to predict many possible diseases of interest; multipurpose dataset, which we used to predict the classifications of heart failure through supervised and observe its natural clusters in unsupervised machine learning algorithms. This investigation requires at least three of 5 machine-learning algorithm categories. The first is to either use Linear Discriminant Analysis (LDA), Quadradic Discriminant Analysis (QDA), or Naive Bayes. Both LDA and QDA require the predictor variables to be numerical. Although two of the variables in the subset are numerical, the remaining are binary categorical variables. Therefore, the assumption is not met for QDA and LDA and cannot be used and, as we have seen, Naïve Bayes was chosen because the subset is more suited for this algorithm.
+ 	In the second category, we have the option for Logistic Regression classifiers and/or K-Nearest Neighbour (KNN) for classification/regression. In this report, we used logistic regression because as mentioned before the characteristics of the response and predictor variables; more having a binary response variable, we more catered to logistic regression. Therefore, logistic regression classification was chosen over KNN classification. In addition, using logistic regression allowed us to use the stepwise method to reduce the large dataset where through a series of tests (e.g. F-tests, t-tests) it found a set of independent variables that significantly influence the dependent variable. An alternative to stepwise regression would have been Principal Component Analysis (PCA; the third category option) which is most notably used in data mining for dimensionality reduction and data visualisation. Unfortunately, due to the requirements of PCA; using numerical predictor variables, and the characteristics of the dataset; having mixed variables (numerical and categorical variables), PCA was not used. 
+	Following this discussion, we will discuss unsupervised machine learning algorithms; Cluster Analysis (fourth category), where we will remove the response variable and investigate to see if any additional natural clusters can be found within the dataset pertaining to heart failure and investigate Association Rule Mining (fifth category) to determine if any rules of association can be found between heart failure and other diseases represented as variables in the dataset that can possibly serve as bringing to light any other possible disease a patient could encounter and they can now be aware of.
+
+----------------------------------------------------------
+UNSUPERVISED LEARNING: AHC and DBSCAN
+----------------------------------------------------------
+Part 11. Create new dataset without response variable for unsupervised learning.
+
+```{r}
+HF_unsup = Hf_subset #create copy of data subset
+HF_unsup$HeartFail = NULL #remove response variable 'HeartFail' and perform the clustering based on the remaining variables in the subset of the original data set.
+str(HF_unsup) #view internal structure
+```
+   In unsupervised machine learning algorithms we are only given input objects without any correctly identified outputs. The goal of unsupervised learning is to discover interesting patterns in the data, which is called knowledge discovery.Regarding unsupervised machine learning algorithms, we have cluster analysis. Three popular cluster analysis techniques are K-means, Density-Based Spatial Clustering of Applications with Noise (DBSCAN) and its sister algorithm HDBSCAN, which doesn’t need eps specification as opposed to DBSCAN, and Hierarchical clustering; more specifically Algometric Hierarchical Clustering (AHC). When using the k-means algorithm, it assumes that all ‘n’ variables that describe the data are real-valued; a numeric vector that can be seen as a point in an n-dimensional coordinates space. It is not applicable to categorical data because categorical variables are discrete and do not have any natural origin, so computing Euclidean distance (distance from a centroid as a definition for a cluster) for such space is not meaningful when using categorical variables. Since K-means can only be used in data sets where you can compute the arithmetic mean (mean is a least-squares estimator) which minimizes the squared Euclidean, this puts severe limits on what distances can be used with k-means. Since there are mixed variables in the dataset, the distance that would be used is Gowers distance, if you were to supply K-means with a distance matrix, it just treats it as a data frame, and the outcomes would be incorrect unlike the hclust() function in AHC and the dbscan() function in DBSCAN/HDBSCAN. Therefore k-means cannot be used as a clustering algorithm.
+   As mentioned in the case of distance calculation, we would use Gowers to calculate the distance/dissimilarity between rows when the variables are not the same class/ format, for which (as briefly discussed above) can be used in a hclust()  in AHC and the dbscan() function in DBSCAN/HDBSCAN. DBSCAN/ HDBSCAN does its cluster analysis based on the density of the regions where it uses epsilon (ε; the radius of the circle) and minimum points (minPts; minimum number of points inside the circle). As we said DBSCAN can use Gower distance and can be considered to use. With that said DBSCAN is a good algorithm for finding outliers in a data set and finding arbitrarily shaped clusters based on the density of data points in different regions but requires there to be a drop in the density of data points to detect boundaries between clusters. This can be a foreseen issue due to the possibility of the dataset not having much drop in density between clusters (where there is a possibility of clusters overlapping where multiple clusters might get grouped together into one large cluster). There is also the fact that DBSCAN only works with numerical variables; an error occurs when using mixed variables and therefor a Gower distance matrix is required.
+   In AHC every observation is a cluster on its own and observations are merged with the pair of clusters that are the most similar (least dissimilar) according to a given dissimilarity measure between clusters. When computing the distance/dissimilarity, we use the dist() function within the hclust() function, which will automatically provide the Gowers distance as the method since it recognizes mixed variables within the data subset. AHC is a clustering method that is widely used in many fields such as biology; the essential component of biological data, where the idea that similarity exists on multiple levels as the similarity is a naturally ordered characteristic, and this methodology is not concentrated on when conducting the other clustering analysis that has been mentioned and is why AHC is perchance the most widely used algorithm for expression data as it specifically addresses similarity on multiple levels, in a very simple manner. The simplicity comes in the form of a visual result when the algorithm completes; a dendrogram. The dendrogram allows us to easily interpret and find clusters and gives us a clear visual indication of its model performance. We can further explore the dendrogram at varying cluster sizes by cutting the dendrogram at specific heights (similarity level) to gain a detailed understanding of the model performance at that cut level and view it on a two-dimensional plot.
+  Another option that is outside the scope of this investigative requirement is, PAM (Partitioning around medoids) where the medoid is the object with the smallest distance (using any metric) from all other cluster members. You can transfer the medoid concept to k-means, by replacing the mean with the medoid; you then get k-medoids. Overall, we will use AHC as the preferred method of cluster analysis for the reasons mentioned above with a brief look at DBSCAN/ HDBSCAN to compare their performances.
+
+Part 12. Algometric Hierarchical Clustering: AHC
+```{r}
+#AHC Methods
+#AHC provides us with four approaches to clustering; i) Single-linkage (SL): the smallest pairwise distance between clusters. ii) Complete-linkage algorithm (CL): the largest distance measure of dissimilarity between two clusters. iii) Average-linkage algorithm (AL): an average measurement of the pairwise distances between two clusters and finally iv) Wards: grouping two clusters while attempting to minimize the within-cluster variance.
+HF_ahc_single = hclust(dist(HF_unsup), method = "single") #Single-Linkage method.
+HF_ahc_complete = hclust(dist(HF_unsup), method = "complete") #Complete-Linakge method.
+HF_ahc_average = hclust(dist(HF_unsup), method = "average") #Average-Linkage method.
+HF_ahc_wards = hclust(dist(HF_unsup), method = "ward.D2") #Ward Methos.
+
+
+#Dendograms
+par(mfrow = c(2,2))
+plot(HF_ahc_single, hang = -1, labels = F, col = 'red', main = 'AHC: Single-linkage')
+plot(HF_ahc_complete, hang = -1, labels = F, col = 'blue', main = 'AHC: Complete-linkage')
+plot(HF_ahc_average, hang = -1, labels = F, col = 'dark green', main = 'AHC: Average-linkage')
+plot(HF_ahc_wards, hang = -1, labels = F, col = 'purple', main = 'AHC: Ward')
+par(mfrow = c(1,1))
+#AHC: Ward provides the best clustering method as it identifies clusters at distinct distances.
+
+
+#Cuttree at different k-values/ h-values
+#Single-linkage k=2
+(avg_singlek2_cutree = cutree(HF_ahc_single, k=2))
+#Single-linkage k=3
+(avg_singlek3_cutree = cutree(HF_ahc_single, k=3))
+#Single-linkage k=4
+(avg_singlek4_cutree = cutree(HF_ahc_single, k=4))
+
+#Complete-linkage k=2
+(avg_completek2_cutree = cutree(HF_ahc_complete, k=2))
+#Complete-linkage k=3
+(avg_completek3_cutree = cutree(HF_ahc_complete, k=3))
+#Complete-linkage k=4
+(avg_completek4_cutree = cutree(HF_ahc_complete, k=4))
+
+#Average-linkage k=2
+(avg_averagek2_cutree = cutree(HF_ahc_average, k=2))
+#Average-linkage k=3
+(avg_averagek3_cutree = cutree(HF_ahc_average, k=3))
+#Average-linkage k=4
+(avg_averagek4_cutree = cutree(HF_ahc_average, k=4))
+
+#Ward k=2
+(avg_wardsk2_cutree = cutree(HF_ahc_wards, k=2))
+#Ward k=3
+(avg_wardsk3_cutree = cutree(HF_ahc_wards, k=3))
+#Ward k=4
+(avg_wardsk4_cutree = cutree(HF_ahc_wards, k=4))
+
+
+#2 dimensional plane plots for different cutree clister sizes.
+par(mfrow = c(2,2))
+plot(HF_ahc_single, hang = -1, labels = F, col = 'red', main = 'AHC: Single-linkage')
+#Single-linkage k=2
+hullplot(HF_unsup, cl = avg_singlek2_cutree, main = "Treecut at K=2")
+#Single-linkage k=3
+hullplot(HF_unsup, cl = avg_singlek3_cutree, main = "Treecut at K=3")
+#Single-linkage k=4
+hullplot(HF_unsup, cl = avg_singlek4_cutree, main = "Treecut at K=4")
+
+#Complete-linkage
+plot(HF_ahc_complete, hang = -1, labels = F, col = 'blue', main = 'AHC: Complete-linkage')
+#Complete-linkage k=2
+hullplot(HF_unsup, cl = avg_completek2_cutree, main = "Treecut at K=2")
+#Complete-linkage k=3
+hullplot(HF_unsup, cl = avg_completek3_cutree, main = "Treecut at K=3")
+#Complete-linkage k=4
+hullplot(HF_unsup, cl = avg_completek4_cutree, main = "Treecut at K=4")
+
+#Average-linkage
+plot(HF_ahc_average, hang = -1, labels = F, col = 'dark green', main = 'AHC: Average-linkage')
+#Average-linkage k=2
+hullplot(HF_unsup, cl = avg_averagek2_cutree, main = "Treecut at K=2")
+#Average-linkage k=3
+hullplot(HF_unsup, cl = avg_averagek3_cutree, main = "Treecut at K=3")
+#Average-linkage k=4
+hullplot(HF_unsup, cl = avg_averagek4_cutree, main = "Treecut at K=4")
+
+#Ward
+plot(HF_ahc_wards, hang = -1, labels = F, col = 'purple', main = 'AHC: Ward')
+#Ward k=2
+hullplot(HF_unsup, cl = avg_wardsk2_cutree, main = "Treecut at K=2")
+#Ward k=3
+hullplot(HF_unsup, cl = avg_wardsk3_cutree, main = "Treecut at K=3")
+#Ward k=4
+hullplot(HF_unsup, cl = avg_wardsk4_cutree, main = "Treecut at K=4")
+par(mfrow = c(1,1))
+```
+   With unsupervised machine learning algorithms, we are only given input objects without any correctly identified outputs. The goal of unsupervised learning is to discover interesting patterns in the data, which is called knowledge discovery. For this reason, we take the data subset and remove the response variable ‘HeartFail’ and use the other inputs to learn and possibly discover interesting new patterns/ clusters in the data (See RMarkdown Part 11 for raw code).
+   With the Agglomerative Hierarchical Cluster (AHC) the four methods; 1) Single-linkage algorithm (SL): the distance between two clusters of observations, is defined as the smallest pairwise distance between these clusters. 2) Complete-linkage algorithm (CL): a measure of dissimilarity between two clusters, where we take the largest distance. 3) Average-linkage algorithm (AL): an average measure of the pairwise distances between two clusters and finally 4) Wards: aggregating two groups so that within-group inertia increases as little as possible to keep the clusters homogeneous (attempts to generate clusters to minimize the within-cluster variance). Each method was conducted and investigated to observe which method had the best performance and within that, at which clustering size provided the most distinct clusters. The results of the  dendrogram and treecuts made clusters sizes 2-4 displayed on a two-dimensional plane to observe and overall determine which dendrogram provides the best clustering results and for which clustering size does the method provide the most distinct clustering.
+   Dendrogram (Tree plot) results for each AHC clustering method where the bottom (leaves) are the observations and clusters are represented by the vertical lines. The horizontal lines depict the mergers of the clusters which occur at different levels (heights) on the y-axis scale; corresponding to the distance between the clusters being merged. As mentioned previously the clustering starts with each observation as its own cluster and the two closest points then merge to form a new, larger cluster and then picks the next closest cluster (based on distance) and joins them. This iterates until all clusters have been merged into one cluster. At lower heights (depicted on the y-axis) where the merging of clusters begins, this correlates to greater similarity in the groups of observations. Vice-versa, the greater the height, the greater the difference in the groups of observations. We can cut the dendrogram at any height and/ or cluster sizes using cuttree () to view the clusters at that specific point in the dendrogram on a two-dimensional plane.
+   Observing each of the dendrograms we can conclude that SL (figure 12: red dendrogram) performs the worst in creating distinct clusters as several linkages occur at close distances (heights) with no prominent clusters far away from each other relative to their internal distances. We can see in the two-dimensional plots  at k = 2-4 cluster sizes there is one distinct disproportional (to the other clusters) cluster, and the other clusters have only one observation (k=2-4), two observations (k=3&4) and 3 observations (k=4) in their identified clusters. Although you cannot see this clustering separation distinctly occurring on the dendrogram, the small cluster sizes would be represented on the far left of the dendrogram when a straight vertical line would span the whole y-axis scale (one observation as a cluster for k=2), another merge near the bottom with two observations (forming a cluster of two for k=3) and, at k=4, another merging to form the fourth cluster containing the three observations.
+   Investigating CL and AL (blue and green dendrograms) we can conclude they both methods produce approximately the same results with a trade-off in clustering performances (CL and AL) at $k=3$ and k=4 when observing their two-dimensional plots. Although both overall show better results than the SL method; better clustering performance as the cluster linkages occur at further distances with more prominent clusters than SL and the clusters are further away from each other relative to their internal distances. With that said, we can see the scaling for height regarding the CL method having a larger parameter (figure 12: 1-500 vs 0-200 in AL) which correlates to CL’s method cluster linkages occurring at further distances with slightly more prominent clusters. This correlates to the two-dimensional plots cluster being more balanced regarding the number of observations, particularly pertaining to the two distinctly larger clusters, with arguably better clustering at K=4 as well. At k=3 it is apparent that AL has done a better job in clustering than CL.
+   The purple dendrogram depicts Ward’s method which produced the best results as we observe both the dendrogram and the two-dimensional plots (figure 16) depicting the clusters at different ‘k’ values. The Wards dendrograms depict the best clustering performance as the cluster linkages occur at far greater distances; observing the height scale we can see the parameter for the height is from 0 to > 4000 compared to the other methods where their parameters are in the hundreds. We can also observe far greater prominent clusters compared to the other methods as the clusters are further away from each other relative to their internal distances. Referring to the two-dimensional plots, we can see for each cluster value (k=2-4), the wards method provides more prominent clusters as each cluster contains enough observations to consider them significant groups. Investigating further into the clusters we can determine that k=2/ h = 300 provides the best clustering as there are two distinct clusters of observations that are fairly distanced from each other (very little overlap) and enough observations within each cluster to consider both significant groups. With that said both clustering at k=3 and k=4 perform well (compared to the other AHC methods) with the main distinction between how well it clustered at different k-values coming from the amount of overlap occurring between the red and green clusters that distinguished k=2 as a better clustering performance than at k=3&4. With that said, it may be worth investigating the possibility of having more than two possible outcome groups in the response variables (Heart Failure) due to the natural clustering resulting from the ward’s method. 
+   Regarding the dendrograms in  and the correlation to heights and when cluster linkages occur, due to the varying heights and the compactness at the ‘leaves’ of the dendrogram, it is difficult to determine when linkages begin for comparing between different methods to determine which method can start linkages at an earlier height to determine which is best at finding similarities between observations. For the reason mentioned above, we cannot make any concrete conclusion regarding this aspect of the AHC discussion. Overall, using all AHC methods and observing their results, Ward’s clustering has the best clustering ability (performance) with the best k-value for most optimal/ distinct clustering being k=2, which does correlate to (and what we would expect) the outcomes in the response variable in the original dataset.
+
+Part 13. DBSCAN
+```{r}
+#Create copy of unsupervised dataset
+HF_unsup1 = HF_unsup
+#For DBSCAN binary categorical variables need to be converted to factors in order for it to work.
+HF_unsup1$Alcohol = as.factor(HF_unsup$Alcohol)
+HF_unsup1$HFRedEjeFrac = as.factor(HF_unsup$HFRedEjeFrac)
+HF_unsup1$HFNormEjeFrac = as.factor(HF_unsup$HFNormEjeFrac)
+HF_unsup1$ValvHeaDis = as.factor(HF_unsup$ValvHeaDis)
+HF_unsup1$ContHeaDis = as.factor(HF_unsup$ContHeaDis)
+#Use gower distance matrix for dbscan
+HF_gower_dist = daisy(HF_unsup1, metric = 'gower') #create Gowers distance matrix fo DBSCAN
+HF_gower_dist = as.matrix(HF_gower_dist) #convert to matrix
+
+#Determine eps point with gowers distance matrix and with original unspervised data subset
+kNNdistplot(HF_gower_dist, k=7) #knee point, k = number of dimentsion in the table (7 vairables, therefore k=7)
+abline(h = 1.9, col='red') #knee point determined at 1.9
+
+#DBSCAN model
+(HF_dbs= dbscan(HF_gower_dist, eps = 1.9, minPts = 8)) #ideal eps and minpts
+
+#Visualisation
+plot(HF_gower_dist, col = HF_dbs$cluster+1, pch=19, cex = 0.5, main = "DBSCAN grouping results")
+HF_unsup1$cluster = HF_dbs$cluster
+#Confusion Table
+(HF_dbs_tab = table(HF_dbs$cluster, Hf_subset$HeartFail))
+#visualisation
+par(mfrow = c(2,1))
+#Numerical plot shows bad clustering by DBSCAN
+plot(HF_unsup1$Age, HF_unsup1$Urea, col = HF_dbs$cluster, main = "Age vs Urea Clustering")
+#hullplot(HF_unsup1$Age, HF_unsup1$Urea, col = HF_dbs$cluster, main = "Age vs Urea Clustering")
+#Binary Categorical variable
+plot(HF_unsup1$Alcohol, HF_unsup1$ContHeaDis, col = HF_dbs$cluster, main = "Alcohol vs ContHeaDis Clustering")
+
+#HDBSCAN: Does not finish, the model runs but never converges to a finished product (45 minutes of waitng with no results/ finish)
+#HF_hddbs = hdbscan(HF_gower_dist, minPts = 8)
+#Visualisation
+#plot(HF_gower_dist, col = HF_hddbs$cluster+1, pch=19, cex = 0.5, main = "HDBSCAN grouping results")
+```
+  As previously mentioned, to use DBSCAN and HDBSCAN the dataset needs to have numerical inputs which is not satisfied with the original and subset data. As a result of this, using the daisy() function, we computed a Gower distance matrix (which contains the Gower distance between points from the mixed variables in the dataset) that can replace the subset dataset in the DBSCAN algorithm. Figure 17 depicts the knee plot which is used to determine the epsilon (eps) value for the DBSCAN algorithm where the optimal value is the point of the graph where the bend/ “knee’ occurs. Based on the results we concluded that eps = 1.9 is the optimal value. Another value needed for the algorithm is the minPts value, which, as a rule of thumb, is the number of variables in the dataset. As we know there are 8 variables in the data subset and is used as the minPts value.  Overall DBSCAN found a minimum of 10 clusters and 49 noise points. This is a result of trial and error with trying multiple eps and minPts values, knowing the ideal cluster and trying to produce close to the correct number of clusters. Overall, the correct clustering should have found 2 groups, possibly even three with distinct clustering with minimal overlap of clusters. As depicted in figures 19 and 20 there is noticeably a lot of overlap in the clusters and we can conclude from the summary and the visualization that DBSCAN did not perform well and should not be used. When running the analysis in RStudio for the HDBSCAN method, the program ran but never converges to a finished product; 45 minutes running with no results/ finish. This can be a result of the nature of the dataset, specifically the size of the Gower distance object for which the algorithm continuously iterates through with with no final product (See RMarkdown Part 13 for raw code). Overall, based on both unsupervised machine learning algorithms, their methods, and results, we can confidently conclude that AHC is a preferred unsupervised algorithm with the Ward method producing the best results with the most optimal/ distinct clustering being k=2, which correlates to (and what we would expect) the outcomes in the response variable in the original dataset
+
+----------------------------------------------------------
+ASSOCIATION RULE MINING
+----------------------------------------------------------
+Part 14.
+```{r}
+HF_Assoc = read.csv('DataClean-fullage.csv', colClasses = 'factor') #import file again, but set 'colClasses = factor'.
+dim(HF_Assoc)
+HF_Assoc = setNames(HF_Assoc, c("SerialNo", "Age", "Gender", "AdmissType", "ICUDur", "Outcome", "Smoking", "Alcohol", "Diabetes", "Hypertension", "CorArtDis", "Cardmyop", "ChronKidDis", "LeukCount", "Platelets", "Urea", "Creatinine", "BTypeNatriPep", "RaisCardEnzy", "EjecFrac", "StabAngia", "AcuteCorSyn", "StElevMyoInfa", "ATypChestPain", "HeartFail", "HFRedEjeFrac", "HFNormEjeFrac", "ValvHeaDis", "CompHeaBlk", "SikSinSynd", "AcuKidInj", "CVSInf", "CVABle", "AtriFib", "VenTach", "PSVT", "ContHeaDis", "UTI", "NeurCardSyn", "Orthostatic", "InfEndo", "DeepVenThrom", "PulmEmbo", "ChestInfec", "Count", "Haemoglobin", "Anaemia", "SevereAnaem", "Glucose", "GroupAge", "GroupPlate", "GroupLeuk", "GroupEjectFrac"))
+#Keep only other relevant medical diseases associated with heart disease
+HF_Assoc = HF_Assoc[,-c(1:8,14:20, 41:53)]
+
+dim(HF_Assoc)[2] #25 vairbales: there are diseases that we can use for makign association rules with heart failure.
+#View(HF_Assoc)
+#str(HF_Assoc)
+summary(HF_Assoc)
+
+#Convert to matrix
+HF_TR_obj = as(HF_Assoc, "transactions") #calculate transactions
+summary(HF_TR_obj) #6611 transactions, 50 items and a density of 5.0
+inspect(HF_TR_obj) #View all 6611 transactions
+HR_rule = apriori(HF_Assoc, parameter = list(minlen = 2, maxlen = 17, supp = .48, conf = .50, target = 'rules'), appearance = list(rhs = ('HeartFail=1'), default = 'lhs')) #0 rules found.
+```
+  The idea of Association Rule Mining (ARM) involves using machine learning models to iterate and observe the data for patterns, or coincidences, where it classifies reoccurring ‘if-then’ associations, which within themselves are the association rules. An association rule has two parts: an ‘(A)ntecedent’ (if/left-hand side; lhs) and a ‘(C)onsequent’ (then/right-hand side; rhs). An antecedent is an item found within the data. A consequent is an item found in combination with the antecedent. Therefore, pertaining to this dataset, the intended outcome of using the association rule mining was to find a list of established rules where the consequent is having heart failure and the antecedents are other possible variables within the dataset that correlate to other diseases. The desired outcome is the hope of helping patients and doctors become aware of other possible medical conditions a patient may have that can be tested for and/ or be made aware of if they had heart failure.  Unfortunately, through many iterations of different values within the machine learning models ‘apriori()’ features (‘maxlen’: maximum number of items in a frequent itemset or rule to be returned, ‘support’: percentage of cases that include both ‘A’ and ‘C’,  and ‘confidence’: percentage of cases with ‘A’ that also has ‘C’) 0 association rules were found that pertained to having heart failure as depicted in figure 21 summary. With that said, if more data is collected in the future where more observations and possibly more variables can increase the chances of associated rules being created. 
+
+----------------  
+Conclusion
+	Heart Failure has been categorised as a global pandemic where millions of global citizens are affected by it personally, either living with this medical condition or knowing someone who is dealing with it or even worse, someone who has died from it, with numbers projecting to increase in the future. This has resulted in a global burden as it places great stress on not only the people living with it, their families, and friends, but also caregivers and the healthcare system. The projected increase by such an alarming rate can be contributed to the lack of awareness or motivation as a society. To combat this, we need to improve in providing better awareness, incentivising the promotion of self-care through a healthy lifestyle, and continuing to conduct research to provide information to the public and combat this global issue that claims so many lives. Motivated by the need to help and the impacts heart failure has had in my life, this report contributes to the ongoing research and studies being done to provide insights into the characteristics and prediction of heart failure using machine learning algorithms in data mining. 
+   In this report, using the  ‘DataClean-fullage’ dataset, we discussed and compared appropriate supervised machine learning classification algorithms to predict future outcomes of heart failure, conducted knowledge discoveries of the response variable (heart failure) in unsupervised machine learning algorithms to discover possible unknown insightful patterns using the data provided, and used descriptive machine learning algorithms to discover possible associative rules between heart failure other medical conditions represented as other variables in the dataset. The supervised machine learning classification initially resulted in the creation of a subset of variables from the original dataset resulting in the best-performing model; a model that lowers prediction error and finds significant variables using stepwise regression. Using this subset of data, logistic regression, and Naïve Bayes (with and without the use of kernel) were trained and tested in their abilities to predict classification for future observations. It was found that logistic regression had the best performance by producing a testing accuracy of 99.85%, concluding that logistic regression is the recommended supervised classification model for predicting future observations. Our study into the unsupervised machine learning algorithms; AHC and DBSCAN provided an investigation into the process of natural clustering methods where the AHC Ward method provided the best results with the most optimal/ distinct clustering at a cluster size of k=2, aligning with expectation since we already know the outcome of the response variable is also 2. With that said there are some interesting results into the clustering at k=3&4 that may be worth further investigating. Finally, we used association rule mining to investigate the possible association between heart failure and other possible health conditions present in the dataset, with no association rules found. Overall, the power of data provides researchers, scientists, data scientists and individual curious minds to achieve results that may bring us one step closer to improving our way of life. With more data comes more opportunities to get one step closer to solving problems such as the impact of heart failure. This report and its finding do this by providing a possible starting point for further investigating into finding association rules between heart failure and other medical diseases, exploring natural cluster analysis that goes beyond the scope of the expected outcome and providing an effective predictive model to classify heart failure of future patients (observations) that will ultimately combat this global issue that claims so many lives.
+
+--------------
+References
+
+1. Ponikowski, P., Anker, S. D., AlHabib, K. F., Cowie, M. R., Force, T. L., Hu, S., … Filippatos, G. (2014). Heart failure: preventing disease and death worldwide. ESC Heart Failure, 1(1), 4–25. Retrieved from https://doi.org/10.1002/ehf2.12005 on December 12th. 
+
+2. Coronary Artery Disease - Analysis. (n.d.). Www.kaggle.com. Retrieved from https://www.kaggle.com/datasets/homelysmile/datacad?select=DataClean-fullage.csv on November 17th 2022.
+
+3. Healthdirect Australia. (2020, September 15). Heart failure. Retrieved from https://www.healthdirect.gov.au/heart-failure on December 9th. 
+
+4. CDC. (2019). Heart disease risk factors. Retrieved from https://www.cdc.gov/heartdisease/risk_factors.htm on December 10th 2022.
+
+5. Savarese, G., & Lund, L. H. (2017). Global Public Health Burden of Heart Failure. Cardiac Failure Review, 03(01), Retrieved from https://doi.org/10.15420/cfr.2016:25:2 on December 11th 2022.
+
+6. Mozaffarian, D., Benjamin, E. J., Go, A. S., Arnett, D. K., Blaha, M. J., Cushman, M., Das, S. R., de Ferranti, S., Després, J.-P., Fullerton, H. J., Howard, V. J., Huffman, M. D., Isasi, C. R., Jiménez, M. C., Judd, S. E., Kissela, B. M., Lichtman, J. H., Lisabeth, L. D., Liu, S., & Mackey, R. H. (2016). Heart Disease and Stroke Statistics—2016 Update. Circulation, 133(4). Retrieved from https://doi.org/10.1161/cir.0000000000000350 on December 12th 2022.
+
+7. Wikipedia Contributors. (2019, September 24). Kaggle. Retrieved from https://en.wikipedia.org/wiki/Kaggle on December 13th 2022.
+
+8. Hospital Admissions Data. (n.d.). Retrieved December 13, 2022, from www.kaggle.com website: https://www.kaggle.com/datasets/ashishsahani/hospital-admissions-data?select=HDHI+Admission+data.csv on November 17th 2022.
+
+9. I Webb, G. (2017). (G. I Webb, Ed.) [Review of Naïve Bayes]. Retrieved from https://www.researchgate.net/profile/Geoffrey-Webb/publication/306313918_Naive_Bayes/links/5cab15724585157bd32a75b6/Naive-Bayes.pdf on December 12th 2022.
+
